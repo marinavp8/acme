@@ -1,5 +1,6 @@
 package com.acme.service
 
+import com.acme.storage.FileSystemStorage
 import com.acme.testcontainers.PebbleContainer
 import com.dimafeng.testcontainers.ForAllTestContainer
 import org.scalatest.flatspec.AnyFlatSpec
@@ -124,7 +125,9 @@ class AcmeServiceIntegrationTest extends AnyFlatSpec with Matchers with ForAllTe
   "AcmeService with Pebble" should "connect to Pebble ACME server" in {
     val service = new AcmeService(
       acmeServerUrl = container.acmeUrl,
-      keyDirPath = tempDir.toString
+      keyDirPath = tempDir.toString,
+      autoValidateChallenges = false,
+      storage = new FileSystemStorage(tempDir.toString)
     )
 
     service should not be null
@@ -140,7 +143,9 @@ class AcmeServiceIntegrationTest extends AnyFlatSpec with Matchers with ForAllTe
   it should "create account keys when first initialized" in {
     val service = new AcmeService(
       acmeServerUrl = container.acmeUrl,
-      keyDirPath = tempDir.toString
+      keyDirPath = tempDir.toString,
+      autoValidateChallenges = false,
+      storage = new FileSystemStorage(tempDir.toString)
     )
 
     val accountKeyFile = new File(tempDir.toFile, "account.key")
@@ -162,7 +167,8 @@ class AcmeServiceIntegrationTest extends AnyFlatSpec with Matchers with ForAllTe
       val service = new AcmeService(
         acmeServerUrl = container.acmeUrl,
         keyDirPath = testDir.toString,
-        autoValidateChallenges = true  // Enable auto-validation for Pebble
+        autoValidateChallenges = true,  // Enable auto-validation for Pebble
+        storage = new FileSystemStorage(testDir.toString)
       )
 
       val domain = "pebble-test.example.com"
@@ -177,9 +183,9 @@ class AcmeServiceIntegrationTest extends AnyFlatSpec with Matchers with ForAllTe
           certResult.domain shouldBe domain
           certResult.status shouldBe "VALID"
 
-          // Verify certificate files were created
-          val certFile = new java.io.File(testDir.toFile, "certificate.crt")
-          val chainFile = new java.io.File(testDir.toFile, "certificate-chain.crt")
+          // Verify certificate files were created (with new naming)
+          val certFile = new java.io.File(testDir.toFile, s"$domain.crt")
+          val chainFile = new java.io.File(testDir.toFile, s"$domain-chain.crt")
           certFile.exists() shouldBe true
           chainFile.exists() shouldBe true
 
@@ -203,14 +209,16 @@ class AcmeServiceIntegrationTest extends AnyFlatSpec with Matchers with ForAllTe
     try {
       val service = new AcmeService(
         acmeServerUrl = container.acmeUrl,
-        keyDirPath = testDir.toString
+        keyDirPath = testDir.toString,
+        autoValidateChallenges = false,
+        storage = new FileSystemStorage(testDir.toString)
       )
 
       val domain = "nonexistent.example.com"
       val result = service.revokeCertificate(domain)
 
       result shouldBe a[Failure[_]]
-      result.failed.get.getMessage should include("Certificate file not found")
+      result.failed.get.getMessage should include("Certificate not found")
 
       logger.info("✓ Revocation correctly fails for non-existent certificate")
     } finally {

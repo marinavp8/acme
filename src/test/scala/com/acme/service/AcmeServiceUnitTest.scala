@@ -1,5 +1,6 @@
 package com.acme.service
 
+import com.acme.storage.FileSystemStorage
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -13,7 +14,7 @@ import scala.util.{Failure, Success}
 class AcmeServiceUnitTest extends AnyFlatSpec with Matchers {
 
   "AcmeService" should "be instantiable with default configuration" in {
-    val service = new AcmeService()
+    val service = new AcmeService(new FileSystemStorage("keys"))
     service should not be null
   }
 
@@ -22,7 +23,9 @@ class AcmeServiceUnitTest extends AnyFlatSpec with Matchers {
     try {
       val service = new AcmeService(
         acmeServerUrl = "https://test.acme.example.com/directory",
-        keyDirPath = tempDir.toString
+        keyDirPath = tempDir.toString,
+        autoValidateChallenges = false,
+        storage = new FileSystemStorage(tempDir.toString)
       )
       service should not be null
     } finally {
@@ -36,7 +39,12 @@ class AcmeServiceUnitTest extends AnyFlatSpec with Matchers {
   it should "create and load RSA key pairs" in {
     val tempDir = Files.createTempDirectory("test-keypair")
     try {
-      val service = new AcmeService(keyDirPath = tempDir.toString)
+      val service = new AcmeService(
+        acmeServerUrl = "acme://letsencrypt.org/staging",
+        keyDirPath = tempDir.toString,
+        autoValidateChallenges = false,
+        storage = new FileSystemStorage(tempDir.toString)
+      )
       val keyFile = new File(tempDir.toFile, "test.key")
 
       // Create a new key pair
@@ -67,7 +75,12 @@ class AcmeServiceUnitTest extends AnyFlatSpec with Matchers {
   it should "generate 2048-bit RSA keys" in {
     val tempDir = Files.createTempDirectory("test-keysize")
     try {
-      val service = new AcmeService(keyDirPath = tempDir.toString)
+      val service = new AcmeService(
+        acmeServerUrl = "acme://letsencrypt.org/staging",
+        keyDirPath = tempDir.toString,
+        autoValidateChallenges = false,
+        storage = new FileSystemStorage(tempDir.toString)
+      )
       val keyFile = new File(tempDir.toFile, "test-2048.key")
 
       val keyPair = service.loadOrCreateKeyPair(keyFile)
@@ -87,13 +100,18 @@ class AcmeServiceUnitTest extends AnyFlatSpec with Matchers {
   "revokeCertificate" should "fail when certificate file does not exist" in {
     val tempDir = Files.createTempDirectory("test-revoke-missing")
     try {
-      val service = new AcmeService(keyDirPath = tempDir.toString)
+      val service = new AcmeService(
+        acmeServerUrl = "acme://letsencrypt.org/staging",
+        keyDirPath = tempDir.toString,
+        autoValidateChallenges = false,
+        storage = new FileSystemStorage(tempDir.toString)
+      )
       val domain = "test-missing.example.com"
 
       val result = service.revokeCertificate(domain)
 
       result shouldBe a[Failure[_]]
-      result.failed.get.getMessage should include("Certificate file not found")
+      result.failed.get.getMessage should include("Certificate not found")
 
     } finally {
       // Cleanup
@@ -106,7 +124,12 @@ class AcmeServiceUnitTest extends AnyFlatSpec with Matchers {
   it should "fail when certificate file exists but domain key is missing" in {
     val tempDir = Files.createTempDirectory("test-revoke-no-key")
     try {
-      val service = new AcmeService(keyDirPath = tempDir.toString)
+      val service = new AcmeService(
+        acmeServerUrl = "acme://letsencrypt.org/staging",
+        keyDirPath = tempDir.toString,
+        autoValidateChallenges = false,
+        storage = new FileSystemStorage(tempDir.toString)
+      )
 
       // Create a dummy certificate file
       val certFile = new File(tempDir.toFile, "certificate.crt")
@@ -140,7 +163,9 @@ class AcmeServiceUnitTest extends AnyFlatSpec with Matchers {
       // Use a fake ACME server URL
       val service = new AcmeService(
         acmeServerUrl = "https://fake-acme-server-that-does-not-exist.example.com/dir",
-        keyDirPath = tempDir.toString
+        keyDirPath = tempDir.toString,
+        autoValidateChallenges = false,
+        storage = new FileSystemStorage(tempDir.toString)
       )
       val domain = "test.example.com"
 
