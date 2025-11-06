@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- Application logging -->
+    <logger name="com.acme" level="DEBUG"/>
+    <logger name="org.shredzone.acme4j" level="DEBUG"/>
+    
+    <!-- Suppress class loader warnings -->
+    <logger name="org.springframework.util.ClassUtils" level="ERROR"/>
+    <logger name="org.springframework.core" level="WARN"/>
+    
+    <!-- Suppress SBT/Jansi related warnings -->
+    <logger name="sbt" level="ERROR"/>
+</configuration>
+

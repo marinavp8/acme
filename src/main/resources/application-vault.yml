@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mvp-acme-vault
+
+# Configuración para usar HashiCorp Vault con Pebble
+acme:
+  # URL del servidor ACME (Pebble para testing)
+  server-url: https://localhost:14000/dir
+  
+  # Directorio para claves temporales (account.key se mantiene local)
+  key-dir: keys-vault-test
+  
+  # Auto-validar challenges (Pebble con PEBBLE_VA_ALWAYS_VALID=1)
+  auto-validate: true
+  
+  # Deshabilitar verificación SSL (Pebble usa certificados auto-firmados)
+  disable-ssl-verification: true
+  
+  # Configuración de almacenamiento
+  storage:
+    type: vault  # filesystem o vault
+    
+    # Configuración de Vault
+    vault:
+      address: http://localhost:8200
+      token: ${VAULT_TOKEN:root}  # Token desde variable de entorno
+      path: secret/acme            # Path en Vault KV v2 (sin /data/, se añade automático)
+
+logging:
+  level:
+    root: INFO
+    com.acme: DEBUG
+    org.shredzone.acme4j: DEBUG
+    com.bettercloud.vault: INFO
+

@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mvp-acme
+
+logging:
+  level:
+    root: INFO
+    com.acme: DEBUG
+    org.shredzone.acme4j: DEBUG

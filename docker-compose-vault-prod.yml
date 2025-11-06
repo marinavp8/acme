@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # HashiCorp Vault en modo producción con persistencia
+  vault:
+    image: vault:1.15
+    container_name: acme-vault-prod
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: http://0.0.0.0:8200
+      VAULT_API_ADDR: http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      # Persistencia real de datos
+      - vault-data:/vault/file:rw
+      - vault-logs:/vault/logs:rw
+      # Configuración personalizada
+      - ./vault-config.hcl:/vault/config/vault.hcl:ro
+    command: server
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - acme-network
+    restart: unless-stopped
+
+  # Pebble ACME test server
+  pebble:
+    image: letsencrypt/pebble:latest
+    container_name: acme-pebble-prod
+    ports:
+      - "14000:14000"
+      - "15000:15000"
+    environment:
+      PEBBLE_VA_NOSLEEP: 1
+      PEBBLE_VA_ALWAYS_VALID: 1
+    volumes:
+      - pebble-logs:/var/log/pebble
+    command: pebble -config /test/config/pebble-config.json -strict false
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-q", "-O", "/dev/null", "https://localhost:14000/dir"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - acme-network
+    restart: unless-stopped
+
+volumes:
+  vault-data:
+    driver: local
+  vault-logs:
+    driver: local
+  pebble-logs:
+    driver: local
+
+networks:
+  acme-network:
+    driver: bridge
+

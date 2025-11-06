@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mvp-acme-pebble
+
+# Configuración para Pebble ACME test server
+acme:
+  # URL del servidor ACME de Pebble
+  server-url: https://localhost:14000/dir
+  
+  # Directorio para almacenar claves de prueba
+  key-dir: keys-pebble-test
+  
+  # Auto-validar challenges (Pebble está configurado con PEBBLE_VA_ALWAYS_VALID=1)
+  auto-validate: true
+  
+  # Deshabilitar verificación SSL (Pebble usa certificados auto-firmados)
+  # WARNING: Solo para testing! NUNCA en producción!
+  disable-ssl-verification: true
+
+logging:
+  level:
+    root: INFO
+    com.acme: DEBUG
+    org.shredzone.acme4j: DEBUG
+

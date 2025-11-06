@@ -1,0 +1,16 @@
+target/
+project/target/
+project/project/
+.bsp/
+.idea/
+*.class
+*.log
+*.iml
+.DS_Store
+
+# Keys and certificates (never commit these!)
+keys/
+*.key
+*.crt
+*.pem
+*.csr
